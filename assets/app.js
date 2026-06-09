@@ -12,7 +12,6 @@
     document.documentElement.lang = lang;
     $$("[data-i18n]").forEach(function (el) {
       var k = el.getAttribute("data-i18n");
-      // preserve trailing inline svg (e.g. "Leer más <svg…>")
       var svg = el.querySelector("svg");
       if (svg && el.childNodes.length > 1) {
         el.childNodes[0].nodeValue = t(k) + " ";
@@ -22,6 +21,7 @@
     });
     $$("[data-i18n-ph]").forEach(function (el) { el.placeholder = t(el.getAttribute("data-i18n-ph")); });
     $$(".lang-toggle button").forEach(function (b) { b.classList.toggle("on", b.dataset.lang === lang); });
+    updateFilterLabels();
     renderFleet();
     fillSelects();
     if (current) refreshModalTexts();
@@ -36,10 +36,12 @@
 
   /* ---- icons for specs ---- */
   var IC = {
-    year: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+    year:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
     seats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.2"/><path d="M2 21a7 7 0 0 1 14 0M15 21a5 5 0 0 1 7 0"/></svg>',
     trans: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4v16M17 4v16M7 9h10M7 14h10"/></svg>',
-    fuel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="11" height="18" rx="1"/><path d="M14 8h3l3 3v6a2 2 0 0 1-4 0v-3h-2"/></svg>'
+    fuel:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="11" height="18" rx="1"/><path d="M14 8h3l3 3v6a2 2 0 0 1-4 0v-3h-2"/></svg>',
+    bags:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
+    doors: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><circle cx="8" cy="12" r="1" fill="currentColor"/></svg>'
   };
 
   /* ---- render fleet ---- */
@@ -50,26 +52,67 @@
     }
     return '<img src="' + c.img + '" alt="' + c.name + '">';
   }
+
   function renderFleet() {
     var grid = $("#fleetGrid"); if (!grid) return;
     grid.innerHTML = FLEET.map(function (c) {
-      return '<div class="car-card">' +
-        '<div class="car-img">' + carImageHTML(c) + '</div>' +
-        '<div class="car-row"><div class="car-price"><b>$' + c.price + '</b><span>' + t("coll.day") + '</span></div>' +
-        '<button class="car-book" data-book="' + c.id + '">' + t("coll.book") + '</button></div>' +
-        '<div class="car-body"><div class="car-cat">' + c.cat[lang] + '</div>' +
-        '<h3 class="car-name">' + c.name + '</h3><div class="car-rule"></div>' +
-        '<ul class="car-specs">' +
-        '<li>' + IC.year + c.specs.year + '</li>' +
-        '<li>' + IC.seats + c.specs.seats + ' ' + (lang === "es" ? "plazas" : "seats") + '</li>' +
-        '<li>' + IC.trans + c.specs.trans[lang] + '</li>' +
-        '<li>' + IC.fuel + c.specs.fuel[lang] + '</li>' +
-        '</ul></div></div>';
+      var discBadge = c.discount ? '<div class="car-discount-badge">-' + c.discount + t("coll.off") + '</div>' : '';
+      var origPrice = c.origPrice ? '<span class="car-orig-price">' + t("coll.before") + ' $' + c.origPrice + '</span>' : '';
+      return '<div class="car-card" data-cat="' + c.filterCat + '">' +
+        '<div class="car-img">' + carImageHTML(c) + discBadge + '</div>' +
+        '<div class="car-row">' +
+          '<div class="car-price">' + origPrice + '<b>$' + c.price + '</b><span>' + t("coll.day") + '</span></div>' +
+          '<button class="car-book" data-book="' + c.id + '">' + t("coll.book") + '</button>' +
+        '</div>' +
+        '<div class="car-body">' +
+          '<div class="car-cat">' + c.cat[lang] + '</div>' +
+          '<h3 class="car-name">' + c.name + '</h3>' +
+          '<div class="car-rule"></div>' +
+          '<ul class="car-specs">' +
+            '<li>' + IC.seats + c.specs.seats + (lang === "es" ? " plazas" : " seats") + '</li>' +
+            '<li>' + IC.bags + c.bags + ' ' + t("coll.bags") + '</li>' +
+            '<li>' + IC.trans + c.specs.trans[lang] + '</li>' +
+            '<li>' + IC.doors + c.doors + ' ' + t("coll.doors") + '</li>' +
+          '</ul>' +
+          '<div class="car-insurance-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' + t("coll.insurance") + '</div>' +
+        '</div>' +
+      '</div>';
     }).join("");
     $$("[data-book]", grid).forEach(function (b) {
       b.addEventListener("click", function () { openModal(b.getAttribute("data-book")); });
     });
+    applyFilter(activeFilter);
   }
+
+  /* ============ Fleet filters ============ */
+  var activeFilter = "all";
+
+  function applyFilter(cat) {
+    activeFilter = cat;
+    $$(".car-card").forEach(function (card) {
+      var show = cat === "all" || card.dataset.cat === cat;
+      card.classList.toggle("card-hidden", !show);
+    });
+    $$(".ff-btn").forEach(function (b) {
+      b.classList.toggle("active", b.dataset.cat === cat);
+    });
+  }
+
+  function updateFilterLabels() {
+    var filterMap = {
+      "all": "filter.all", "economico": "filter.eco", "estandar": "filter.std",
+      "suv": "filter.suv", "premium": "filter.prem", "luxury": "filter.lux", "clasico": "filter.cls"
+    };
+    $$(".ff-btn").forEach(function (b) {
+      var key = filterMap[b.dataset.cat];
+      if (key) b.textContent = t(key);
+    });
+  }
+
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".ff-btn");
+    if (btn) applyFilter(btn.dataset.cat);
+  });
 
   /* ---- fill selects (cities + cars) ---- */
   function fillSelects() {
@@ -89,11 +132,51 @@
     }
   }
 
+  /* ============ Stats counter ============ */
+  function animateCounter(el, target, duration) {
+    var start = 0, step = target / (duration / 16);
+    var timer = setInterval(function () {
+      start = Math.min(start + step, target);
+      el.textContent = Math.floor(start).toLocaleString();
+      if (start >= target) clearInterval(timer);
+    }, 16);
+  }
+
+  var statsObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      statsObserver.unobserve(entry.target);
+      $$(".stat-num", entry.target).forEach(function (el) {
+        var target = parseInt(el.dataset.target, 10);
+        animateCounter(el, target, 1600);
+      });
+    });
+  }, { threshold: 0.3 });
+
+  var statsSec = $("#statsSec");
+  if (statsSec) statsObserver.observe(statsSec);
+
+  /* ============ Sticky bottom bar (mobile CRO) ============ */
+  var stickyBar = $("#stickyBar");
+  var heroEl = $("#top");
+  if (stickyBar && heroEl) {
+    var stickyShown = false;
+    window.addEventListener("scroll", function () {
+      var heroBottom = heroEl.offsetTop + heroEl.offsetHeight;
+      var shouldShow = window.scrollY > heroBottom;
+      if (shouldShow !== stickyShown) {
+        stickyShown = shouldShow;
+        stickyBar.classList.toggle("show", shouldShow);
+      }
+    }, { passive: true });
+  }
+
   /* ============ Booking modal ============ */
   var modal = $("#bookingModal"), current = null, viewerTimer = null;
   function carById(id) { return FLEET.filter(function (c) { return c.id === id; })[0]; }
 
   var CAR_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" style="width:48px;height:34px;opacity:.7"><path d="M5 17h14v-3.3a4 4 0 0 0-.8-2.4L16 8H8l-2.2 3.3A4 4 0 0 0 5 13.7z"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/></svg>';
+
   function openModal(id, prefill) {
     current = carById(id); if (!current) return;
     var thumb = $(".modal-head .car-thumb");
@@ -106,15 +189,13 @@
     $("#mCat").textContent = current.cat[lang];
     $("#mTitle").textContent = current.name;
     $("#mPrice").textContent = "$" + current.price;
-    // reset to step 1
     goStep(1);
     clearErrors();
     if (prefill) {
       if (prefill.city) $("#mCity").value = prefill.city;
       if (prefill.from) $("#mFrom").value = prefill.from;
-      if (prefill.to) $("#mTo").value = prefill.to;
+      if (prefill.to)   $("#mTo").value   = prefill.to;
     }
-    // default dates
     var today = new Date(); var iso = today.toISOString().slice(0, 10);
     $("#mFrom").min = iso; $("#mTo").min = iso;
     recalc();
@@ -172,7 +253,9 @@
     $("#mSummary").textContent = current.name + (city ? " · " + city : "");
   }
   ["#mFrom", "#mTo", "#mCity"].forEach(function (s) {
-    document.addEventListener("change", function (e) { if (e.target.matches(s)) { if (s === "#mFrom") syncMinReturn(); recalc(); } });
+    document.addEventListener("change", function (e) {
+      if (e.target.matches(s)) { if (s === "#mFrom") syncMinReturn(); recalc(); }
+    });
   });
   function syncMinReturn() {
     var f = $("#mFrom").value;
@@ -180,8 +263,14 @@
   }
 
   /* ---- validation ---- */
-  function clearErrors() { $$(".field.show-err").forEach(function (f) { f.classList.remove("show-err"); }); $$("input.err,select.err").forEach(function (i) { i.classList.remove("err"); }); }
-  function fail(fieldSel, inputSel) { $(fieldSel).classList.add("show-err"); if (inputSel) $(inputSel).classList.add("err"); }
+  function clearErrors() {
+    $$(".field.show-err").forEach(function (f) { f.classList.remove("show-err"); });
+    $$("input.err,select.err").forEach(function (i) { i.classList.remove("err"); });
+  }
+  function fail(fieldSel, inputSel) {
+    $(fieldSel).classList.add("show-err");
+    if (inputSel) $(inputSel).classList.add("err");
+  }
 
   function refreshModalTexts() {
     if (!current) return;
@@ -197,15 +286,19 @@
     if (!$("#mCity").value) { fail("#fCity", "#mCity"); ok = false; }
     if (!$("#mFrom").value || !$("#mTo").value) { fail("#fTo", "#mTo"); ok = false; }
     else if (daysBetween($("#mFrom").value, $("#mTo").value) < 1) {
-      $("#fTo").classList.add("show-err"); $("#fTo .err-msg").textContent = t("m.errDate2"); $("#mTo").classList.add("err"); ok = false;
+      $("#fTo").classList.add("show-err");
+      $("#fTo .err-msg").textContent = t("m.errDate2");
+      $("#mTo").classList.add("err"); ok = false;
     }
     if (ok) goStep(2);
   });
   $("#mBack").addEventListener("click", function () { goStep(1); });
 
   /* ---- step 2 → WhatsApp ---- */
-  function fmtDate(s) { var d = new Date(s + "T00:00:00"); return ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear(); }
-
+  function fmtDate(s) {
+    var d = new Date(s + "T00:00:00");
+    return ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear();
+  }
   function buildMessage() {
     var days = daysBetween($("#mFrom").value, $("#mTo").value);
     var total = days * current.price;
@@ -232,14 +325,25 @@
     var phone = $("#mPhone").value.replace(/[^\d]/g, "");
     if (phone.length < 7) { fail("#fPhone", "#mPhone"); ok = false; }
     if (!ok) return;
-    var url = "https://wa.me/" + AGENT + "?text=" + buildMessage();
-    window.open(url, "_blank");
+    window.open("https://wa.me/" + AGENT + "?text=" + buildMessage(), "_blank");
   });
 
   /* ---- close handlers ---- */
   $("#mClose").addEventListener("click", closeModal);
   modal.addEventListener("click", function (e) { if (e.target === modal) closeModal(); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && modal.classList.contains("show")) closeModal(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && modal.classList.contains("show")) closeModal();
+  });
+
+  /* ============ FAQ accordion ============ */
+  document.addEventListener("click", function (e) {
+    var head = e.target.closest(".faq-head");
+    if (!head) return;
+    var item = head.parentElement;
+    var isOpen = item.classList.contains("open");
+    $$(".faq-item.open").forEach(function (i) { i.classList.remove("open"); });
+    if (!isOpen) item.classList.add("open");
+  });
 
   /* ============ Search form → open modal prefilled ============ */
   $("#searchForm").addEventListener("submit", function (e) {
@@ -247,14 +351,17 @@
     var carId = $("#sCar").value || FLEET[0].id;
     openModal(carId, { city: $("#sCity").value, from: $("#sFrom").value, to: $("#sTo").value });
   });
-  // search date min
   (function () {
     var iso = new Date().toISOString().slice(0, 10);
     if ($("#sFrom")) { $("#sFrom").min = iso; $("#sTo").min = iso; }
-    if ($("#sFrom")) $("#sFrom").addEventListener("change", function () { if ($("#sFrom").value) $("#sTo").min = $("#sFrom").value; });
+    if ($("#sFrom")) {
+      $("#sFrom").addEventListener("change", function () {
+        if ($("#sFrom").value) $("#sTo").min = $("#sFrom").value;
+      });
+    }
   })();
 
-  /* ============ Accordion ============ */
+  /* ============ Accordion (how it works) ============ */
   $$(".acc-item .acc-head").forEach(function (h) {
     h.addEventListener("click", function () {
       var item = h.parentElement, open = item.classList.contains("open");
@@ -274,8 +381,13 @@
   var sections = ["top", "fleet", "services", "about", "contact"];
   window.addEventListener("scroll", function () {
     var pos = window.scrollY + 120, cur = "top";
-    sections.forEach(function (id) { var el = document.getElementById(id); if (el && el.offsetTop <= pos) cur = id; });
-    $$(".nav a").forEach(function (a) { a.classList.toggle("active", a.getAttribute("href") === "#" + cur); });
+    sections.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el && el.offsetTop <= pos) cur = id;
+    });
+    $$(".nav a").forEach(function (a) {
+      a.classList.toggle("active", a.getAttribute("href") === "#" + cur);
+    });
   }, { passive: true });
 
   /* ---- init ---- */

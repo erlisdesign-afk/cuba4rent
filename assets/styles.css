@@ -400,6 +400,116 @@ ul{margin:0;padding:0;list-style:none}
   .news-form{flex-direction:column}.news-form input{min-width:0}
   .about-media .a-car{position:static;width:90%;margin:14px auto 0}
 }
+/* ============ Trust Strip ============ */
+.trust-strip{background:var(--navy);border-bottom:1px solid rgba(255,255,255,.08);overflow:hidden}
+.trust-inner{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:nowrap;overflow:hidden}
+.trust-item{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.82);font-size:13px;
+  font-family:var(--head);font-weight:600;padding:11px 26px;white-space:nowrap;
+  border-right:1px solid rgba(255,255,255,.1)}
+.trust-item:last-child{border-right:none}
+.trust-item svg{width:15px;height:15px;color:var(--wa);flex:none}
+
+/* ============ Stats Section ============ */
+.stats-sec{background:var(--red);padding:56px 0}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;text-align:center}
+.stat-item{padding:20px 16px;position:relative}
+.stat-item:not(:last-child)::after{content:"";position:absolute;right:0;top:20%;height:60%;width:1px;background:rgba(255,255,255,.25)}
+.stat-num-wrap{display:flex;align-items:baseline;justify-content:center;gap:2px}
+.stat-num{font-family:var(--head);font-weight:800;font-size:48px;color:#fff;line-height:1}
+.stat-suffix{font-family:var(--head);font-weight:800;font-size:30px;color:rgba(255,255,255,.8)}
+.stat-label{color:rgba(255,255,255,.75);font-size:13.5px;margin-top:6px;font-family:var(--head);font-weight:500}
+
+/* ============ Fleet Filters ============ */
+.fleet-filters{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:38px}
+.ff-btn{font-family:var(--head);font-weight:600;font-size:14px;padding:9px 20px;border-radius:50px;
+  border:1.5px solid var(--line);color:var(--muted);cursor:pointer;transition:.2s;background:#fff}
+.ff-btn:hover{border-color:var(--red);color:var(--red)}
+.ff-btn.active{background:var(--red);color:#fff;border-color:var(--red)}
+
+/* ============ Car card enhancements ============ */
+.car-img{position:relative}
+.car-discount-badge{position:absolute;top:10px;left:10px;background:var(--red);color:#fff;
+  font-family:var(--head);font-weight:700;font-size:12px;padding:4px 10px;border-radius:50px;z-index:2}
+.car-orig-price{display:block;font-size:12px;color:var(--muted);text-decoration:line-through;line-height:1;margin-bottom:2px}
+.car-insurance-tag{display:inline-flex;align-items:center;gap:5px;color:var(--wa-dark);font-size:12px;
+  font-weight:600;font-family:var(--head);margin-top:14px;background:rgba(29,168,81,.08);
+  padding:5px 10px;border-radius:50px}
+.car-card.card-hidden{display:none}
+
+/* ============ Agent Section ============ */
+.agent-sec{background:var(--navy);padding:80px 0;overflow:hidden}
+.agent-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.agent-photo{position:relative}
+.agent-photo img{width:100%;border-radius:20px;box-shadow:0 40px 80px rgba(0,0,0,.5);object-fit:cover;max-height:480px}
+.agent-photo::before{content:"";position:absolute;inset:-16px;border-radius:28px;
+  background:linear-gradient(135deg,var(--red),transparent 60%);z-index:-1;opacity:.5}
+.agent-online{position:absolute;top:20px;left:20px;display:flex;align-items:center;gap:8px;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(8px);color:#fff;font-size:12.5px;
+  font-weight:600;font-family:var(--head);padding:7px 14px;border-radius:50px}
+.agent-online .dot{width:9px;height:9px;border-radius:50%;background:var(--wa);flex:none;animation:pulse-dot 1.8s infinite}
+@keyframes pulse-dot{0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.6)}50%{box-shadow:0 0 0 6px rgba(37,211,102,0)}}
+.agent-text .eyebrow{color:rgba(255,255,255,.6)}
+.agent-text .eyebrow::before{background:rgba(255,255,255,.4)}
+.agent-title{color:#fff;font-size:42px;margin:14px 0 20px}
+.agent-desc{color:rgba(255,255,255,.72);font-size:16px;line-height:1.75;max-width:460px}
+.agent-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);
+  color:rgba(255,255,255,.75);font-size:13px;font-family:var(--head);font-weight:600;
+  padding:9px 16px;border-radius:50px;margin:20px 0 28px}
+.agent-badge svg{color:var(--wa);width:16px;height:16px;flex:none}
+
+/* ============ FAQ Section ============ */
+.faq-list{max-width:740px;margin:46px auto 0;text-align:left}
+.faq-item{border-bottom:1px solid var(--line);overflow:hidden}
+.faq-head{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:22px 4px;cursor:pointer;user-select:none}
+.faq-head h4{font-size:17px;color:var(--navy);flex:1;transition:color .2s}
+.faq-item.open .faq-head h4{color:var(--red)}
+.faq-toggle{width:34px;height:34px;border-radius:50%;background:var(--gray);color:var(--red);
+  display:grid;place-items:center;flex:none;transition:.25s}
+.faq-item.open .faq-toggle{background:var(--red);color:#fff;transform:rotate(45deg)}
+.faq-body{max-height:0;overflow:hidden;transition:max-height .35s ease,padding .3s;color:var(--muted);font-size:15px;line-height:1.7;padding:0 4px}
+.faq-item.open .faq-body{max-height:200px;padding-bottom:22px}
+
+/* ============ Sticky bar (mobile CRO) ============ */
+.sticky-bar{position:fixed;bottom:0;left:0;right:0;z-index:79;background:#fff;
+  border-top:1px solid var(--line);padding:12px 20px;display:none;
+  align-items:center;justify-content:space-between;gap:14px;
+  box-shadow:0 -8px 30px rgba(12,20,46,.12)}
+.sticky-bar.show{display:flex}
+.sb-info{font-family:var(--head)}
+.sb-from{font-size:12px;color:var(--muted);display:block}
+.sb-price{font-size:22px;font-weight:800;color:var(--navy)}
+.sb-price small{font-size:13px;color:var(--muted);font-weight:500}
+
+/* ============ Payment methods ============ */
+.payment-methods{margin-top:28px}
+.payment-methods p{color:rgba(255,255,255,.5);font-size:12.5px;margin-bottom:10px;font-family:var(--head)}
+.pay-icons{display:flex;flex-wrap:wrap;gap:8px}
+.pay-icon{background:rgba(255,255,255,.1);border-radius:6px;padding:5px 12px;
+  color:rgba(255,255,255,.75);font-family:var(--head);font-weight:700;font-size:12px;letter-spacing:.5px}
+
+/* ============ Responsive — new components ============ */
+@media(max-width:1024px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .stat-item:nth-child(2)::after{display:none}
+  .agent-grid{grid-template-columns:1fr;gap:40px}
+  .agent-photo{max-width:460px;margin:0 auto}
+  .agent-title{font-size:34px}
+}
+@media(max-width:680px){
+  .trust-inner{justify-content:flex-start;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:0;flex-wrap:nowrap}
+  .trust-item{flex:none}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .stat-num{font-size:36px}
+  .fleet-filters{justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}
+  .ff-btn{flex:none}
+  .agent-title{font-size:28px}
+  .sticky-bar{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+}
+@media(min-width:681px){
+  .sticky-bar{display:none!important}
+}
+
 @media(prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
 }
