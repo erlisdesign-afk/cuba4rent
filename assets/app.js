@@ -1,4 +1,4 @@
-/* ============ Cuba4Rent — App logic ============ */
+/* ============ Cuba4Rent — App ============ */
 (function () {
   "use strict";
   var FLEET = window.FLEET, CITIES = window.CITIES, I18N = window.I18N, AGENT = window.AGENT_WA;
@@ -7,106 +7,150 @@
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var t = function (k) { return (I18N[lang] && I18N[lang][k]) || (I18N.es[k]) || k; };
 
-  /* ---- i18n apply ---- */
+  /* ─── i18n ─── */
   function applyLang() {
     document.documentElement.lang = lang;
     $$("[data-i18n]").forEach(function (el) {
       var k = el.getAttribute("data-i18n");
       var svg = el.querySelector("svg");
-      if (svg && el.childNodes.length > 1) {
-        el.childNodes[0].nodeValue = t(k) + " ";
-      } else {
-        el.textContent = t(k);
-      }
+      if (svg && el.childNodes.length > 1) { el.childNodes[0].nodeValue = t(k) + " "; }
+      else { el.innerHTML = t(k); }
     });
     $$("[data-i18n-ph]").forEach(function (el) { el.placeholder = t(el.getAttribute("data-i18n-ph")); });
     $$(".lang-toggle button").forEach(function (b) { b.classList.toggle("on", b.dataset.lang === lang); });
     updateFilterLabels();
     renderFleet();
+    renderLastMinute();
+    renderEarlyBird();
+    renderCategories();
     fillSelects();
     if (current) refreshModalTexts();
   }
 
-  /* ---- language toggle ---- */
+  /* ─── lang toggle ─── */
   $$(".lang-toggle button").forEach(function (b) {
-    b.addEventListener("click", function () {
-      lang = b.dataset.lang; localStorage.setItem("c4r_lang", lang); applyLang();
-    });
+    b.addEventListener("click", function () { lang = b.dataset.lang; localStorage.setItem("c4r_lang", lang); applyLang(); });
   });
 
-  /* ---- icons for specs ---- */
+  /* ─── Icons ─── */
   var IC = {
-    year:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
-    seats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.2"/><path d="M2 21a7 7 0 0 1 14 0M15 21a5 5 0 0 1 7 0"/></svg>',
-    trans: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4v16M17 4v16M7 9h10M7 14h10"/></svg>',
-    fuel:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="11" height="18" rx="1"/><path d="M14 8h3l3 3v6a2 2 0 0 1-4 0v-3h-2"/></svg>',
-    bags:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
-    doors: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><circle cx="8" cy="12" r="1" fill="currentColor"/></svg>'
+    trans:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4v16M17 4v16M7 9h10M7 14h10"/></svg>',
+    bags:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
+    gas:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="11" height="18" rx="1"/><path d="M14 8h3l3 3v6a2 2 0 0 1-4 0v-3h-2"/></svg>',
+    doors:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="15" cy="12" r="1" fill="currentColor" stroke="none"/></svg>',
+    seats:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M2 21a7 7 0 0 1 14 0"/><circle cx="17" cy="9" r="2.5"/><path d="M13 21a5 5 0 0 1 8 0"/></svg>',
+    shield:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    check:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>',
+    clock24:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+    tag:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none"/></svg>'
   };
 
-  /* ---- render fleet ---- */
+  /* ─── Build one car card (Gran Azul style) ─── */
   function carImageHTML(c) {
     if (c.slot) {
       var ph = c.id === "suv" ? t("slot.suv") : t("slot.classic");
-      return '<image-slot id="' + c.slot + '" shape="rounded" radius="8" placeholder="' + ph + '"></image-slot>';
+      return '<image-slot id="' + c.slot + '" shape="cover" radius="0" placeholder="' + ph + '"></image-slot>';
     }
-    return '<img src="' + c.img + '" alt="' + c.name + '">';
+    return '<img src="' + c.img + '" alt="' + c.name + '" loading="lazy">';
   }
+
+  function buildCard(c) {
+    var discBadge  = c.discount ? '<div class="cc-discount">-' + c.discount + '%</div>' : '';
+    var origPrice  = c.origPrice ? '<span class="cc-orig">' + t("coll.before") + ' $' + c.origPrice + '</span>' : '';
+    return (
+      '<div class="car-card" data-cat="' + c.filterCat + '">' +
+        '<div class="cc-img">' +
+          carImageHTML(c) +
+          discBadge +
+        '</div>' +
+        '<div class="cc-body">' +
+          '<div class="cc-category">' + c.cat[lang] + '</div>' +
+          '<h3 class="cc-name">' + c.name + '</h3>' +
+          '<ul class="cc-specs">' +
+            '<li>' + IC.trans  + '<span>' + c.specs.trans[lang] + '</span></li>' +
+            '<li>' + IC.bags   + '<span>' + c.bags + ' ' + t("coll.bags") + '</span></li>' +
+            '<li>' + IC.gas    + '<span>' + c.gasPolicy[lang] + '</span></li>' +
+            '<li>' + IC.doors  + '<span>' + c.doors + ' ' + t("coll.doors") + '</span></li>' +
+            '<li>' + IC.seats  + '<span>' + c.specs.seats + (lang === "es" ? " asientos" : " seats") + '</span></li>' +
+            '<li>' + IC.shield + '<span>' + t("coll.insurance") + '</span></li>' +
+          '</ul>' +
+          '<div class="cc-footer">' +
+            '<div class="cc-price-block">' +
+              origPrice +
+              '<div class="cc-price-main">' + t("coll.from") + ' <strong>$' + c.price + '</strong><span>' + t("coll.day") + '</span></div>' +
+            '</div>' +
+            '<button class="btn btn-red cc-book" data-book="' + c.id + '">' + t("coll.book") + '</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  /* ─── Render fleet grid ─── */
+  var activeFilter = "all";
 
   function renderFleet() {
     var grid = $("#fleetGrid"); if (!grid) return;
-    grid.innerHTML = FLEET.map(function (c) {
-      var discBadge = c.discount ? '<div class="car-discount-badge">-' + c.discount + t("coll.off") + '</div>' : '';
-      var origPrice = c.origPrice ? '<span class="car-orig-price">' + t("coll.before") + ' $' + c.origPrice + '</span>' : '';
-      return '<div class="car-card" data-cat="' + c.filterCat + '">' +
-        '<div class="car-img">' + carImageHTML(c) + discBadge + '</div>' +
-        '<div class="car-row">' +
-          '<div class="car-price">' + origPrice + '<b>$' + c.price + '</b><span>' + t("coll.day") + '</span></div>' +
-          '<button class="car-book" data-book="' + c.id + '">' + t("coll.book") + '</button>' +
-        '</div>' +
-        '<div class="car-body">' +
-          '<div class="car-cat">' + c.cat[lang] + '</div>' +
-          '<h3 class="car-name">' + c.name + '</h3>' +
-          '<div class="car-rule"></div>' +
-          '<ul class="car-specs">' +
-            '<li>' + IC.seats + c.specs.seats + (lang === "es" ? " plazas" : " seats") + '</li>' +
-            '<li>' + IC.bags + c.bags + ' ' + t("coll.bags") + '</li>' +
-            '<li>' + IC.trans + c.specs.trans[lang] + '</li>' +
-            '<li>' + IC.doors + c.doors + ' ' + t("coll.doors") + '</li>' +
-          '</ul>' +
-          '<div class="car-insurance-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' + t("coll.insurance") + '</div>' +
-        '</div>' +
-      '</div>';
-    }).join("");
-    $$("[data-book]", grid).forEach(function (b) {
-      b.addEventListener("click", function () { openModal(b.getAttribute("data-book")); });
-    });
+    grid.innerHTML = FLEET.map(buildCard).join("");
+    bindBookButtons(grid);
     applyFilter(activeFilter);
   }
 
-  /* ============ Fleet filters ============ */
-  var activeFilter = "all";
+  function renderLastMinute() {
+    var grid = $("#lastminGrid"); if (!grid) return;
+    var cars = FLEET.filter(function (c) { return c.lastMinute; });
+    grid.innerHTML = cars.map(buildCard).join("");
+    bindBookButtons(grid);
+  }
 
-  function applyFilter(cat) {
-    activeFilter = cat;
-    $$(".car-card").forEach(function (card) {
-      var show = cat === "all" || card.dataset.cat === cat;
-      card.classList.toggle("card-hidden", !show);
-    });
-    $$(".ff-btn").forEach(function (b) {
-      b.classList.toggle("active", b.dataset.cat === cat);
+  function renderEarlyBird() {
+    var grid = $("#earlybirdGrid"); if (!grid) return;
+    var cars = FLEET.filter(function (c) { return c.earlyBird; });
+    grid.innerHTML = cars.map(buildCard).join("");
+    bindBookButtons(grid);
+  }
+
+  function bindBookButtons(container) {
+    $$("[data-book]", container).forEach(function (b) {
+      b.addEventListener("click", function () { openModal(b.getAttribute("data-book")); });
     });
   }
 
-  function updateFilterLabels() {
-    var filterMap = {
-      "all": "filter.all", "economico": "filter.eco", "estandar": "filter.std",
-      "suv": "filter.suv", "premium": "filter.prem", "luxury": "filter.lux", "clasico": "filter.cls"
-    };
-    $$(".ff-btn").forEach(function (b) {
-      var key = filterMap[b.dataset.cat];
-      if (key) b.textContent = t(key);
+  /* ─── Category grid ─── */
+  function renderCategories() {
+    var grid = $("#catGrid"); if (!grid) return;
+    grid.innerHTML = FLEET.map(function (c) {
+      var imgHtml = c.slot
+        ? '<div class="cat-slot-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><path d="M5 17h14v-3.3a4 4 0 0 0-.8-2.4L16 8H8l-2.2 3.3A4 4 0 0 0 5 13.7z"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/></svg></div>'
+        : '<img src="' + c.img + '" alt="' + c.name + '" loading="lazy">';
+      return (
+        '<div class="cat-card" data-book="' + c.id + '">' +
+          '<div class="cat-img">' + imgHtml + '</div>' +
+          '<div class="cat-info">' +
+            '<div class="cat-label">' + c.cat[lang] + '</div>' +
+            '<div class="cat-name">' + c.name + '</div>' +
+            '<div class="cat-price">' + t("cat.from") + ' <strong>$' + c.price + '</strong>' + t("coll.day") + '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join("");
+    $$(".cat-card").forEach(function (card) {
+      card.addEventListener("click", function () { openModal(card.dataset.book); });
     });
+  }
+
+  /* ─── Fleet filters ─── */
+  function applyFilter(cat) {
+    activeFilter = cat;
+    $$(".car-card", $("#fleetGrid")).forEach(function (card) {
+      card.classList.toggle("card-hidden", cat !== "all" && card.dataset.cat !== cat);
+    });
+    $$(".ff-btn").forEach(function (b) { b.classList.toggle("active", b.dataset.cat === cat); });
+  }
+
+  function updateFilterLabels() {
+    var map = { "all":"filter.all","economico":"filter.eco","estandar":"filter.std","suv":"filter.suv","premium":"filter.prem","luxury":"filter.lux","clasico":"filter.cls" };
+    $$(".ff-btn").forEach(function (b) { if (map[b.dataset.cat]) b.textContent = t(map[b.dataset.cat]); });
   }
 
   document.addEventListener("click", function (e) {
@@ -114,92 +158,107 @@
     if (btn) applyFilter(btn.dataset.cat);
   });
 
-  /* ---- fill selects (cities + cars) ---- */
+  /* ─── Fill selects ─── */
   function fillSelects() {
     var cityOpts = CITIES.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join("");
-    [["#sCity", "search.pickCity"], ["#mCity", "search.pickCity"]].forEach(function (p) {
+    [["#sCity","hf.pickCity"],["#mCity","hf.pickCity"]].forEach(function (p) {
       var sel = $(p[0]); if (!sel) return;
       var val = sel.value;
       sel.innerHTML = '<option value="">' + t(p[1]) + '</option>' + cityOpts;
       sel.value = val;
     });
-    var carSel = $("#sCar");
-    if (carSel) {
-      var val = carSel.value;
-      carSel.innerHTML = '<option value="">' + t("search.pickCar") + '</option>' +
-        FLEET.map(function (c) { return '<option value="' + c.id + '">' + c.name + ' — $' + c.price + t("coll.day") + '</option>'; }).join("");
-      carSel.value = val;
-    }
   }
 
-  /* ============ Stats counter ============ */
-  function animateCounter(el, target, duration) {
-    var start = 0, step = target / (duration / 16);
-    var timer = setInterval(function () {
-      start = Math.min(start + step, target);
-      el.textContent = Math.floor(start).toLocaleString();
-      if (start >= target) clearInterval(timer);
-    }, 16);
-  }
-
+  /* ─── Stats counter ─── */
   var statsObserver = new IntersectionObserver(function (entries) {
     entries.forEach(function (entry) {
       if (!entry.isIntersecting) return;
       statsObserver.unobserve(entry.target);
       $$(".stat-num", entry.target).forEach(function (el) {
-        var target = parseInt(el.dataset.target, 10);
-        animateCounter(el, target, 1600);
+        var target = parseInt(el.dataset.target, 10), start = 0;
+        var step = target / (1600 / 16);
+        var timer = setInterval(function () {
+          start = Math.min(start + step, target);
+          el.textContent = Math.floor(start).toLocaleString();
+          if (start >= target) clearInterval(timer);
+        }, 16);
       });
     });
   }, { threshold: 0.3 });
-
   var statsSec = $("#statsSec");
   if (statsSec) statsObserver.observe(statsSec);
 
-  /* ============ Sticky bottom bar (mobile CRO) ============ */
+  /* ─── FAQ accordion ─── */
+  document.addEventListener("click", function (e) {
+    var head = e.target.closest(".faq-head");
+    if (!head) return;
+    var item = head.parentElement;
+    var isOpen = item.classList.contains("open");
+    $$(".faq-item.open").forEach(function (i) { i.classList.remove("open"); });
+    if (!isOpen) item.classList.add("open");
+  });
+
+  /* ─── Steps accordion ─── */
+  $$(".acc-item .acc-head").forEach(function (h) {
+    h.addEventListener("click", function () {
+      var item = h.parentElement, open = item.classList.contains("open");
+      $$(".acc-item").forEach(function (i) { i.classList.remove("open"); });
+      if (!open) item.classList.add("open");
+    });
+  });
+
+  /* ─── Sticky bar ─── */
   var stickyBar = $("#stickyBar");
-  var heroEl = $("#top");
+  var heroEl    = $("#top");
   if (stickyBar && heroEl) {
     var stickyShown = false;
     window.addEventListener("scroll", function () {
-      var heroBottom = heroEl.offsetTop + heroEl.offsetHeight;
-      var shouldShow = window.scrollY > heroBottom;
-      if (shouldShow !== stickyShown) {
-        stickyShown = shouldShow;
-        stickyBar.classList.toggle("show", shouldShow);
-      }
+      var show = window.scrollY > (heroEl.offsetTop + heroEl.offsetHeight);
+      if (show !== stickyShown) { stickyShown = show; stickyBar.classList.toggle("show", show); }
     }, { passive: true });
   }
 
-  /* ============ Booking modal ============ */
+  /* ─── Mobile nav ─── */
+  var mnav = $("#mobileNav");
+  $("#burger").addEventListener("click", function () { mnav.classList.add("show"); });
+  mnav.addEventListener("click", function (e) { if (e.target === mnav || e.target.tagName === "A") mnav.classList.remove("show"); });
+
+  /* ─── Header active link ─── */
+  window.addEventListener("scroll", function () {
+    var pos = window.scrollY + 120, cur = "top";
+    ["top","fleet","about","contact"].forEach(function (id) {
+      var el = document.getElementById(id); if (el && el.offsetTop <= pos) cur = id;
+    });
+    $$(".nav a").forEach(function (a) { a.classList.toggle("active", a.getAttribute("href") === "#" + cur); });
+  }, { passive: true });
+
+  /* ══════════════ Booking modal ══════════════ */
   var modal = $("#bookingModal"), current = null, viewerTimer = null;
+  var prefillData = {};
+
   function carById(id) { return FLEET.filter(function (c) { return c.id === id; })[0]; }
 
   var CAR_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" style="width:48px;height:34px;opacity:.7"><path d="M5 17h14v-3.3a4 4 0 0 0-.8-2.4L16 8H8l-2.2 3.3A4 4 0 0 0 5 13.7z"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/></svg>';
 
-  function openModal(id, prefill) {
+  function openModal(id, pf) {
     current = carById(id); if (!current) return;
-    var thumb = $(".modal-head .car-thumb");
-    var holder = thumb.firstElementChild;
+    var pref = pf || prefillData;
+    var thumb = $(".modal-head .car-thumb"), holder = thumb.firstElementChild;
     if (current.slot) {
       holder.outerHTML = '<div id="mImg" style="width:88px;height:56px;display:grid;place-items:center;flex:none">' + CAR_ICON + '</div>';
     } else {
       holder.outerHTML = '<img id="mImg" src="' + current.img + '" alt="' + current.name + '">';
     }
-    $("#mCat").textContent = current.cat[lang];
+    $("#mCat").textContent  = current.cat[lang];
     $("#mTitle").textContent = current.name;
     $("#mPrice").textContent = "$" + current.price;
-    goStep(1);
-    clearErrors();
-    if (prefill) {
-      if (prefill.city) $("#mCity").value = prefill.city;
-      if (prefill.from) $("#mFrom").value = prefill.from;
-      if (prefill.to)   $("#mTo").value   = prefill.to;
-    }
-    var today = new Date(); var iso = today.toISOString().slice(0, 10);
+    goStep(1); clearErrors();
+    var iso = new Date().toISOString().slice(0, 10);
     $("#mFrom").min = iso; $("#mTo").min = iso;
-    recalc();
-    startViewers();
+    if (pref.city) $("#mCity").value = pref.city;
+    if (pref.from) { $("#mFrom").value = pref.from; syncMinReturn(); }
+    if (pref.to)   $("#mTo").value   = pref.to;
+    recalc(); startViewers();
     modal.classList.add("show");
     document.body.style.overflow = "hidden";
     setTimeout(function () { $("#mCity").focus(); }, 300);
@@ -213,10 +272,7 @@
   }
 
   function startViewers() {
-    function set() {
-      var n = Math.floor(Math.random() * 8) + 3;
-      $("#mViewers").textContent = n + " " + t("m.viewing");
-    }
+    function set() { $("#mViewers").textContent = (Math.floor(Math.random() * 8) + 3) + " " + t("m.viewing"); }
     set();
     if (viewerTimer) clearInterval(viewerTimer);
     viewerTimer = setInterval(set, 15000);
@@ -226,14 +282,12 @@
     $("#mStep1").classList.toggle("hidden", n !== 1);
     $("#mStep2").classList.toggle("hidden", n !== 2);
     $$(".progress .pstep").forEach(function (p) {
-      var pn = +p.dataset.p;
-      p.classList.toggle("active", pn === n);
-      p.classList.toggle("done", pn < n);
+      p.classList.toggle("active", +p.dataset.p === n);
+      p.classList.toggle("done",   +p.dataset.p < n);
     });
     modal.querySelector(".modal").scrollTop = 0;
   }
 
-  /* ---- total calc ---- */
   function daysBetween(a, b) {
     if (!a || !b) return 0;
     var d = (new Date(b) - new Date(a)) / 86400000;
@@ -243,154 +297,80 @@
     if (!current) return;
     var days = daysBetween($("#mFrom").value, $("#mTo").value);
     var total = days * current.price;
-    var dayLabel = days === 1 ? t("m.day") : t("m.days_p");
-    var dtxt = days ? days + " " + dayLabel : "—";
-    $("#mDays").textContent = dtxt;
+    var dl = days === 1 ? t("m.day") : t("m.days_p");
+    var dtxt = days ? days + " " + dl : "—";
+    $("#mDays").textContent  = dtxt;
     $("#mDays2").textContent = dtxt;
-    $("#mTotal").textContent = "$" + total;
+    $("#mTotal").textContent  = "$" + total;
     $("#mTotal2").textContent = "$" + total;
-    var city = $("#mCity").value;
-    $("#mSummary").textContent = current.name + (city ? " · " + city : "");
+    $("#mSummary").textContent = current.name + ($("#mCity").value ? " · " + $("#mCity").value : "");
   }
-  ["#mFrom", "#mTo", "#mCity"].forEach(function (s) {
-    document.addEventListener("change", function (e) {
-      if (e.target.matches(s)) { if (s === "#mFrom") syncMinReturn(); recalc(); }
-    });
+  ["#mFrom","#mTo","#mCity"].forEach(function (s) {
+    document.addEventListener("change", function (e) { if (e.target.matches(s)) { if (s === "#mFrom") syncMinReturn(); recalc(); } });
   });
   function syncMinReturn() {
     var f = $("#mFrom").value;
     if (f) { $("#mTo").min = f; if ($("#mTo").value && $("#mTo").value < f) $("#mTo").value = ""; }
   }
 
-  /* ---- validation ---- */
   function clearErrors() {
     $$(".field.show-err").forEach(function (f) { f.classList.remove("show-err"); });
     $$("input.err,select.err").forEach(function (i) { i.classList.remove("err"); });
   }
-  function fail(fieldSel, inputSel) {
-    $(fieldSel).classList.add("show-err");
-    if (inputSel) $(inputSel).classList.add("err");
-  }
+  function fail(fs, is) { $(fs).classList.add("show-err"); if (is) $(is).classList.add("err"); }
 
   function refreshModalTexts() {
     if (!current) return;
-    $("#mCat").textContent = current.cat[lang];
-    recalc();
+    $("#mCat").textContent = current.cat[lang]; recalc();
     var n = ($("#mViewers").textContent.match(/\d+/) || [Math.floor(Math.random() * 8) + 3])[0];
     $("#mViewers").textContent = n + " " + t("m.viewing");
   }
 
-  /* ---- step 1 → 2 ---- */
   $("#mNext").addEventListener("click", function () {
     clearErrors(); var ok = true;
-    if (!$("#mCity").value) { fail("#fCity", "#mCity"); ok = false; }
-    if (!$("#mFrom").value || !$("#mTo").value) { fail("#fTo", "#mTo"); ok = false; }
+    if (!$("#mCity").value) { fail("#fCity","#mCity"); ok = false; }
+    if (!$("#mFrom").value || !$("#mTo").value) { fail("#fTo","#mTo"); ok = false; }
     else if (daysBetween($("#mFrom").value, $("#mTo").value) < 1) {
-      $("#fTo").classList.add("show-err");
-      $("#fTo .err-msg").textContent = t("m.errDate2");
-      $("#mTo").classList.add("err"); ok = false;
+      $("#fTo").classList.add("show-err"); $("#fTo .err-msg").textContent = t("m.errDate2"); $("#mTo").classList.add("err"); ok = false;
     }
     if (ok) goStep(2);
   });
   $("#mBack").addEventListener("click", function () { goStep(1); });
 
-  /* ---- step 2 → WhatsApp ---- */
-  function fmtDate(s) {
-    var d = new Date(s + "T00:00:00");
-    return ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear();
-  }
+  function fmtDate(s) { var d = new Date(s + "T00:00:00"); return ("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear(); }
   function buildMessage() {
-    var days = daysBetween($("#mFrom").value, $("#mTo").value);
-    var total = days * current.price;
-    var notes = $("#mNotes").value.trim();
-    var msg = "🚗 *RESERVA Cuba4Rent*\n\n" +
-      "Auto: *" + current.name + "*\n" +
-      "Categoría: " + current.cat.es + "\n" +
-      "Precio: $" + current.price + "/día\n\n" +
-      "👤 Cliente: " + $("#mName").value.trim() + "\n" +
-      "📱 Contacto: " + $("#mPhone").value.trim() + "\n" +
-      "📍 Ciudad de recogida: " + $("#mCity").value + "\n" +
-      "📅 Recogida: " + fmtDate($("#mFrom").value) + "\n" +
-      "📅 Devolución: " + fmtDate($("#mTo").value) + "\n" +
-      "⏱ Duración: " + days + " día" + (days > 1 ? "s" : "") + "\n" +
-      "💰 Total estimado: *$" + total + " USD*\n" +
-      (notes ? "📝 Notas: " + notes + "\n" : "") +
-      "\n_Generado desde Cuba4Rent.com_";
-    return encodeURIComponent(msg);
+    var days = daysBetween($("#mFrom").value, $("#mTo").value), total = days * current.price;
+    return encodeURIComponent("🚗 *RESERVA Cuba4Rent*\n\nAuto: *" + current.name + "*\nCategoría: " + current.cat.es + "\nPrecio: $" + current.price + "/día\n\n👤 Cliente: " + $("#mName").value.trim() + "\n📱 Contacto: " + $("#mPhone").value.trim() + "\n📍 Ciudad: " + $("#mCity").value + "\n📅 Recogida: " + fmtDate($("#mFrom").value) + "\n📅 Devolución: " + fmtDate($("#mTo").value) + "\n⏱ Duración: " + days + " día" + (days > 1 ? "s" : "") + "\n💰 Total: *$" + total + " USD*\n" + ($("#mNotes").value.trim() ? "📝 Notas: " + $("#mNotes").value.trim() + "\n" : "") + "\n_Generado desde Cuba4Rent.com_");
   }
 
   $("#mSend").addEventListener("click", function () {
     clearErrors(); var ok = true;
-    if ($("#mName").value.trim().length < 2) { fail("#fName", "#mName"); ok = false; }
-    var phone = $("#mPhone").value.replace(/[^\d]/g, "");
-    if (phone.length < 7) { fail("#fPhone", "#mPhone"); ok = false; }
+    if ($("#mName").value.trim().length < 2) { fail("#fName","#mName"); ok = false; }
+    if ($("#mPhone").value.replace(/[^\d]/g,"").length < 7) { fail("#fPhone","#mPhone"); ok = false; }
     if (!ok) return;
     window.open("https://wa.me/" + AGENT + "?text=" + buildMessage(), "_blank");
   });
 
-  /* ---- close handlers ---- */
   $("#mClose").addEventListener("click", closeModal);
   modal.addEventListener("click", function (e) { if (e.target === modal) closeModal(); });
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && modal.classList.contains("show")) closeModal();
-  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && modal.classList.contains("show")) closeModal(); });
 
-  /* ============ FAQ accordion ============ */
-  document.addEventListener("click", function (e) {
-    var head = e.target.closest(".faq-head");
-    if (!head) return;
-    var item = head.parentElement;
-    var isOpen = item.classList.contains("open");
-    $$(".faq-item.open").forEach(function (i) { i.classList.remove("open"); });
-    if (!isOpen) item.classList.add("open");
-  });
-
-  /* ============ Search form → open modal prefilled ============ */
-  $("#searchForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var carId = $("#sCar").value || FLEET[0].id;
-    openModal(carId, { city: $("#sCity").value, from: $("#sFrom").value, to: $("#sTo").value });
-  });
-  (function () {
+  /* ─── Hero search form → store prefill + scroll to fleet ─── */
+  var heroForm = $("#heroForm");
+  if (heroForm) {
     var iso = new Date().toISOString().slice(0, 10);
-    if ($("#sFrom")) { $("#sFrom").min = iso; $("#sTo").min = iso; }
-    if ($("#sFrom")) {
-      $("#sFrom").addEventListener("change", function () {
-        if ($("#sFrom").value) $("#sTo").min = $("#sFrom").value;
-      });
-    }
-  })();
-
-  /* ============ Accordion (how it works) ============ */
-  $$(".acc-item .acc-head").forEach(function (h) {
-    h.addEventListener("click", function () {
-      var item = h.parentElement, open = item.classList.contains("open");
-      $$(".acc-item").forEach(function (i) { i.classList.remove("open"); });
-      if (!open) item.classList.add("open");
+    var sFrom = $("#sFrom"), sTo = $("#sTo");
+    if (sFrom) { sFrom.min = iso; sTo.min = iso; }
+    if (sFrom) sFrom.addEventListener("change", function () { if (sFrom.value) sTo.min = sFrom.value; });
+    heroForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      prefillData = { city: $("#sCity").value, from: sFrom ? sFrom.value : "", to: sTo ? sTo.value : "" };
+      var fleet = document.getElementById("fleet");
+      if (fleet) fleet.scrollIntoView({ behavior: "smooth", block: "start" });
     });
-  });
+  }
 
-  /* ============ Mobile nav ============ */
-  var mnav = $("#mobileNav");
-  $("#burger").addEventListener("click", function () { mnav.classList.add("show"); });
-  mnav.addEventListener("click", function (e) {
-    if (e.target === mnav || e.target.tagName === "A") mnav.classList.remove("show");
-  });
-
-  /* ============ Header active link on scroll ============ */
-  var sections = ["top", "fleet", "services", "about", "contact"];
-  window.addEventListener("scroll", function () {
-    var pos = window.scrollY + 120, cur = "top";
-    sections.forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el && el.offsetTop <= pos) cur = id;
-    });
-    $$(".nav a").forEach(function (a) {
-      a.classList.toggle("active", a.getAttribute("href") === "#" + cur);
-    });
-  }, { passive: true });
-
-  /* ---- init ---- */
+  /* ─── Init ─── */
   fillSelects();
   applyLang();
 })();
